@@ -160,10 +160,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _resetToBase();
   }
 
-  void _toggleNibble() {
-    setState(() => _engine.nibbleMode = !_engine.nibbleMode);
-  }
-
   void _toggleOctal() {
     setState(() => _engine.showOctal = !_engine.showOctal);
   }
@@ -232,7 +228,6 @@ class _HomeScreenState extends State<HomeScreen> {
             result: _result,
             error: _error,
             showOctal: _engine.showOctal,
-            nibbleMode: _engine.nibbleMode,
             engine: _engine,
           ),
           _buildBaseSelector(baseColor),
@@ -303,8 +298,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           )),
           const SizedBox(width: 4),
-          _miniToggle('Nib', _engine.nibbleMode, _toggleNibble),
-          const SizedBox(width: 2),
           _miniToggle('Oct', _engine.showOctal, _toggleOctal),
         ],
       ),

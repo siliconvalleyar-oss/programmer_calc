@@ -7,7 +7,6 @@ class CalcDisplay extends StatelessWidget {
   final num? result;
   final String? error;
   final bool showOctal;
-  final bool nibbleMode;
   final CalculatorEngine engine;
 
   const CalcDisplay({
@@ -16,7 +15,6 @@ class CalcDisplay extends StatelessWidget {
     this.result,
     this.error,
     this.showOctal = false,
-    this.nibbleMode = false,
     required this.engine,
   });
 
@@ -63,10 +61,12 @@ class CalcDisplay extends StatelessWidget {
 
   Widget _buildResultDisplays() {
     final v = result!;
+    final binValue = engine.formatBin(v);
+    final binLabels = engine.formatBinLabels(v);
     final rows = <Widget>[
       _resultRow('DEC', AppTheme.decColor, engine.formatDec(v)),
       _resultRow('HEX', AppTheme.hexColor, '0x${engine.formatHex(v)}'),
-      _resultRow('BIN', AppTheme.binColor, '0b${engine.formatBin(v, nibble: nibbleMode)}'),
+      _binRow(binValue, binLabels),
     ];
     if (showOctal) {
       rows.add(_resultRow('OCT', AppTheme.octColor, '0o${engine.formatOct(v)}'));
@@ -76,6 +76,44 @@ class CalcDisplay extends StatelessWidget {
       child: DefaultTextStyle(
         style: const TextStyle(fontFamily: 'monospace', fontSize: 14, height: 1.6),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows),
+      ),
+    );
+  }
+
+  Widget _binRow(String binValue, String binLabels) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppTheme.binColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text('BIN', style: TextStyle(color: AppTheme.binColor, fontSize: 11, fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '0b$binValue',
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  textAlign: TextAlign.right,
+                ),
+                Text(
+                  ' $binLabels',
+                  style: const TextStyle(color: AppTheme.textDim, fontSize: 11),
+                  textAlign: TextAlign.right,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

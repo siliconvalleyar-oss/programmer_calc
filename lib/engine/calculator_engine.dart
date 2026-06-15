@@ -369,22 +369,36 @@ class CalculatorEngine {
     return intVal.toRadixString(8);
   }
 
-  String formatBin(num value, {bool nibble = false}) {
+  String formatBin(num value) {
     final intVal = value.toInt() & 0xFFFFFFFF;
     var s = intVal.toRadixString(2);
-    if (nibble) {
-      final pad = (4 - s.length % 4) % 4;
-      s = s.padLeft(s.length + pad, '0');
-      final buf = StringBuffer();
-      for (var i = 0; i < s.length; i++) {
-        if (i > 0 && i % 4 == 0) buf.write(' ');
-        buf.write(s[i]);
-      }
-      return buf.toString();
+    final pad = (8 - s.length % 8) % 8;
+    s = s.padLeft(s.length + pad, '0');
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && i % 8 == 0) buf.write(' ');
+      buf.write(s[i]);
     }
-    return s;
+    return buf.toString();
   }
 
-  bool nibbleMode = false;
+  String formatBinLabels(num value) {
+    final binStr = formatBin(value);
+    final groups = binStr.split(' ');
+    final buf = StringBuffer();
+    int currentPos = 0;
+    for (int g = 0; g < groups.length; g++) {
+      final group = groups[g];
+      final label = (g * 8).toString();
+      final labelEnd = currentPos + group.length - 1;
+      final labelStart = labelEnd - label.length + 1;
+      final spaces = labelStart - buf.length;
+      if (spaces > 0) buf.write(''.padLeft(spaces));
+      buf.write(label);
+      currentPos += group.length + 1;
+    }
+    return buf.toString();
+  }
+
   bool showOctal = false;
 }
