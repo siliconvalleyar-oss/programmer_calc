@@ -372,18 +372,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _customBottomRow(bool isBin) {
     return Row(children: [
-      Expanded(flex: 2, child: CalcButton(
-        label: 'C',
-        onTap: _clear,
-        color: AppTheme.accentOrange,
-        fontSize: 18,
-      )),
       Expanded(child: _btn(isBin ? '0/1' : '0', () => _pressDigit('0'))),
       Expanded(child: _btn('.', () => _pressDigit('.'))),
       Expanded(child: _btn('%', () => _pressOperator('%'))),
       Expanded(child: _btn('*', () => _pressOperator('*'))),
       Expanded(child: _btn('/', () => _pressOperator('/'))),
       Expanded(child: _btn('=', _evaluate, color: AppTheme.accentOrange)),
+      Expanded(flex: 2, child: CalcButton(
+        label: 'C',
+        onTap: _clear,
+        color: AppTheme.accentOrange,
+        fontSize: 18,
+      )),
     ]);
   }
 

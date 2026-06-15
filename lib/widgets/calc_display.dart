@@ -21,29 +21,27 @@ class CalcDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      margin: EdgeInsets.zero,
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.textDim.withValues(alpha: 0.3)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildExpressionBar(),
-            if (result != null) _buildResultDisplays(),
-            if (error != null) _buildErrorBar(),
-          ],
+        border: Border(
+          bottom: BorderSide(color: AppTheme.textDim.withValues(alpha: 0.3)),
         ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildExpressionBar(),
+          if (result != null) _buildResultDisplays(),
+          if (error != null) _buildErrorBar(),
+        ],
       ),
     );
   }
 
   Widget _buildExpressionBar() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       color: AppTheme.bgDark,
       child: Text(
         expression.isEmpty ? '0' : expression,
@@ -75,73 +73,73 @@ class CalcDisplay extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: DefaultTextStyle(
         style: const TextStyle(fontFamily: 'monospace', fontSize: 14, height: 1.6),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: rows.map((r) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: r,
+          )).toList(),
+        ),
       ),
     );
   }
 
   Widget _binRow(String binValue, String binLabels) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppTheme.binColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text('BIN', style: TextStyle(color: AppTheme.binColor, fontSize: 11, fontWeight: FontWeight.w700)),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: AppTheme.binColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(4),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '0b$binValue',
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
-                  textAlign: TextAlign.right,
-                ),
-                Text(
-                  ' $binLabels',
-                  style: const TextStyle(color: AppTheme.textDim, fontSize: 11),
-                  textAlign: TextAlign.right,
-                ),
-              ],
-            ),
+          child: Text('BIN', style: TextStyle(color: AppTheme.binColor, fontSize: 11, fontWeight: FontWeight.w700)),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '0b$binValue',
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+                textAlign: TextAlign.right,
+              ),
+              Text(
+                ' $binLabels',
+                style: const TextStyle(color: AppTheme.textDim, fontSize: 11),
+                textAlign: TextAlign.right,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _resultRow(String label, Color color, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(4),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(color: Colors.white, fontSize: 15),
-              textAlign: TextAlign.right,
-            ),
+          child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(color: Colors.white, fontSize: 15),
+            textAlign: TextAlign.right,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
