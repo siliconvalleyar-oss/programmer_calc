@@ -361,18 +361,20 @@ class CalculatorEngine {
 
   String formatHex(num value) {
     final intVal = value.toInt() & 0xFFFFFFFF;
-    return intVal.toRadixString(16).toUpperCase().padLeft(8, '0');
+    return intVal.toRadixString(16).toUpperCase();
   }
 
   String formatOct(num value) {
     final intVal = value.toInt() & 0xFFFFFFFF;
-    return intVal.toRadixString(8).padLeft(11, '0');
+    return intVal.toRadixString(8);
   }
 
   String formatBin(num value, {bool nibble = false}) {
     final intVal = value.toInt() & 0xFFFFFFFF;
-    var s = intVal.toRadixString(2).padLeft(32, '0');
+    var s = intVal.toRadixString(2);
     if (nibble) {
+      final pad = (4 - s.length % 4) % 4;
+      s = s.padLeft(s.length + pad, '0');
       final buf = StringBuffer();
       for (var i = 0; i < s.length; i++) {
         if (i > 0 && i % 4 == 0) buf.write(' ');
