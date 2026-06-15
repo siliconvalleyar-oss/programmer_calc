@@ -360,20 +360,18 @@ class CalculatorEngine {
   String formatDec(num value) => value.toString();
 
   String formatHex(num value) {
-    final intVal = value.toInt() & 0xFFFFFFFF;
+    final intVal = value.toInt() & mask64;
     return intVal.toRadixString(16).toUpperCase();
   }
 
   String formatOct(num value) {
-    final intVal = value.toInt() & 0xFFFFFFFF;
+    final intVal = value.toInt() & mask64;
     return intVal.toRadixString(8);
   }
 
   String formatBin(num value) {
-    final intVal = value.toInt() & 0xFFFFFFFF;
-    var s = intVal.toRadixString(2);
-    final pad = (8 - s.length % 8) % 8;
-    s = s.padLeft(s.length + pad, '0');
+    final intVal = value.toInt() & mask64;
+    var s = intVal.toRadixString(2).padLeft(64, '0');
     final buf = StringBuffer();
     for (var i = 0; i < s.length; i++) {
       if (i > 0 && i % 8 == 0) buf.write(' ');
@@ -383,22 +381,24 @@ class CalculatorEngine {
   }
 
   String formatBinLabels(num value) {
-    final binStr = formatBin(value);
-    final groups = binStr.split(' ');
+    const groups = 8;
+    const bitsPerGroup = 8;
     final buf = StringBuffer();
     int currentPos = 0;
-    for (int g = 0; g < groups.length; g++) {
-      final group = groups[g];
-      final label = (g * 8).toString();
-      final labelEnd = currentPos + group.length - 1;
+    for (int g = 0; g < groups; g++) {
+      final lsb = (groups - 1 - g) * bitsPerGroup;
+      final label = lsb.toString();
+      final labelEnd = currentPos + bitsPerGroup - 1;
       final labelStart = labelEnd - label.length + 1;
       final spaces = labelStart - buf.length;
       if (spaces > 0) buf.write(''.padLeft(spaces));
       buf.write(label);
-      currentPos += group.length + 1;
+      currentPos += bitsPerGroup + 1;
     }
     return buf.toString();
   }
+
+  static const int mask64 = 0x7FFFFFFFFFFFFFFF;
 
   bool showOctal = false;
 }
