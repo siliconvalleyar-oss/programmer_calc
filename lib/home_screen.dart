@@ -22,40 +22,126 @@ class _HomeScreenState extends State<HomeScreen> {
   String _expression = '';
   num? _result;
   String? _error;
-  InputBase _inputBase = InputBase.dec;
+  InputBase _inputBase = InputBase.hex;
+  bool _fresh = true;
 
   @override
   void initState() {
     super.initState();
-    _result = 0;
+    _resetToBase();
   }
 
-  void _append(String s) {
+  String _basePrefix() {
+    switch (_inputBase) {
+      case InputBase.hex: return '0x';
+      case InputBase.oct: return '0o';
+      case InputBase.bin: return '0b';
+      case InputBase.dec: return '';
+    }
+  }
+
+  String _baseInitExpr() {
+    switch (_inputBase) {
+      case InputBase.hex: return '0x0';
+      case InputBase.oct: return '0o0';
+      case InputBase.bin: return '0b0';
+      case InputBase.dec: return '0';
+    }
+  }
+
+  String _baseValidDigits() {
+    switch (_inputBase) {
+      case InputBase.hex: return '0123456789ABCDEFabcdef';
+      case InputBase.oct: return '01234567';
+      case InputBase.bin: return '01';
+      case InputBase.dec: return '0123456789.';
+    }
+  }
+
+  bool _isBaseNum(String expr) {
+    return RegExp(r'^(0[xXbBoOcC])?[0-9a-fA-F]+(\.[0-9]+)?$').hasMatch(expr);
+  }
+
+  void _resetToBase() {
+    setState(() {
+      _expression = _baseInitExpr();
+      _fresh = true;
+      _error = null;
+    });
+    _autoEval();
+  }
+
+  void _pressDigit(String d) {
     setState(() {
       _error = null;
-      _expression += s;
+      if (_fresh) {
+        _expression = _baseInitExpr();
+        _fresh = false;
+      }
+      final prefix = _basePrefix();
+      if (_expression.length == prefix.length + 1 &&
+          _expression.startsWith(prefix) &&
+          _expression.endsWith('0')) {
+        _expression = _expression.substring(0, _expression.length - 1) + d;
+      } else {
+        _expression += d;
+      }
+    });
+    _autoEval();
+  }
+
+  void _pressOperator(String op) {
+    setState(() {
+      _error = null;
+      _fresh = false;
+      _expression += op;
+    });
+  }
+
+  void _insertFunction(String name) {
+    setState(() {
+      _error = null;
+      _fresh = false;
+      _expression += '$name(';
     });
   }
 
   void _clear() {
-    setState(() {
-      _expression = '';
-      _result = null;
-      _error = null;
-    });
+    _resetToBase();
   }
 
   void _backspace() {
     setState(() {
-      if (_expression.isNotEmpty) {
-        _expression = _expression.substring(0, _expression.length - 1);
+      _error = null;
+      if (_fresh || _expression.isEmpty) return;
+      final prefix = _basePrefix();
+      if (_expression.length <= prefix.length + 1) return;
+      _expression = _expression.substring(0, _expression.length - 1);
+    });
+    _autoEval();
+  }
+
+  void _evaluate() {
+    if (_expression.isEmpty) {
+      _resetToBase();
+      return;
+    }
+    setState(() {
+      _engine.clearError();
+      final r = _engine.evaluate(_expression);
+      if (r != null) {
+        _result = r;
         _error = null;
+        _fresh = true;
+      } else {
+        _error = _engine.lastError.isNotEmpty ? _engine.lastError : 'Error';
       }
     });
   }
 
-  void _evaluate() {
+  void _autoEval() {
     if (_expression.isEmpty) return;
+    if (!_isBaseNum(_expression)) return;
     setState(() {
       _engine.clearError();
       final r = _engine.evaluate(_expression);
@@ -69,7 +155,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _setBase(InputBase base) {
+    if (base == _inputBase) return;
     setState(() => _inputBase = base);
+    _resetToBase();
   }
 
   void _toggleNibble() {
@@ -98,19 +186,23 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _insertFunction(String name) {
-    _append('$name(');
+  bool _isValidForBase(String s) {
+    for (var i = 0; i < s.length; i++) {
+      if (!_baseValidDigits().contains(s[i])) return false;
+    }
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
     final baseColor = _baseColor(_inputBase);
     final isHex = _inputBase == InputBase.hex;
+    final isBin = _inputBase == InputBase.bin;
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
       appBar: AppBar(
-        title: const Text('PCALC'),
+        title: const SizedBox.shrink(),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
@@ -149,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
               child: Column(
                 children: [
-                  _buildRow(['C', '⌫', '(', ')', '<<', '>>']),
+                  _buildRow(['⌫', '(', ')', '<<', '>>', '&']),
                   const SizedBox(height: 2),
                   _buildFunctionRow(),
                   const SizedBox(height: 2),
@@ -161,14 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 2),
                   _buildRow(['1', '2', '3', '+', '-', '~']),
                   const SizedBox(height: 2),
-                  _buttonRow6([
-                    _btn(_inputBase == InputBase.bin ? '0/1' : '0', () => _append('0')),
-                    _btn('.', () => _append('.')),
-                    _btn('%', () => _append('%')),
-                    _btn('*', () => _append('*')),
-                    _btn('/', () => _append('/')),
-                    _btn('=', _evaluate, color: AppTheme.accentOrange),
-                  ]),
+                  _customBottomRow(isBin),
                 ],
               ),
             ),
@@ -266,29 +351,47 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHexRow(bool isHex) {
     final alpha = isHex ? 1.0 : 0.3;
     return _buttonRow6([
-      _btn('A', () => _append('A'), disabled: !isHex, opacity: alpha),
-      _btn('B', () => _append('B'), disabled: !isHex, opacity: alpha),
-      _btn('C', () => _append('C'), disabled: !isHex, opacity: alpha),
-      _btn('D', () => _append('D'), disabled: !isHex, opacity: alpha),
-      _btn('E', () => _append('E'), disabled: !isHex, opacity: alpha),
-      _btn('F', () => _append('F'), disabled: !isHex, opacity: alpha),
+      _btn('A', () => _pressDigit('A'), disabled: !isHex, opacity: alpha),
+      _btn('B', () => _pressDigit('B'), disabled: !isHex, opacity: alpha),
+      _btn('C', () => _pressDigit('C'), disabled: !isHex, opacity: alpha),
+      _btn('D', () => _pressDigit('D'), disabled: !isHex, opacity: alpha),
+      _btn('E', () => _pressDigit('E'), disabled: !isHex, opacity: alpha),
+      _btn('F', () => _pressDigit('F'), disabled: !isHex, opacity: alpha),
     ]);
   }
 
   Widget _buildRow(List<String> labels) {
     return _buttonRow6(labels.map((l) {
       VoidCallback? onTap;
-      if (l == '(') { onTap = () => _append('('); }
-      else if (l == ')') { onTap = () => _append(')'); }
+      if (l == '(') { onTap = () => _pressOperator('('); }
+      else if (l == ')') { onTap = () => _pressOperator(')'); }
       else if (l == 'C') { onTap = _clear; }
       else if (l == '⌫') { onTap = _backspace; }
-      else { onTap = () => _append(l); }
+      else if (_isValidForBase(l)) { onTap = () => _pressDigit(l); }
+      else { onTap = () => _pressOperator(l); }
       return _btn(l, onTap);
     }).toList());
   }
 
   Widget _buttonRow6(List<Widget> buttons) {
     return Row(children: buttons.map((b) => Expanded(child: b)).toList());
+  }
+
+  Widget _customBottomRow(bool isBin) {
+    return Row(children: [
+      Expanded(flex: 2, child: CalcButton(
+        label: 'C',
+        onTap: _clear,
+        color: AppTheme.accentOrange,
+        fontSize: 18,
+      )),
+      Expanded(child: _btn(isBin ? '0/1' : '0', () => _pressDigit('0'))),
+      Expanded(child: _btn('.', () => _pressDigit('.'))),
+      Expanded(child: _btn('%', () => _pressOperator('%'))),
+      Expanded(child: _btn('*', () => _pressOperator('*'))),
+      Expanded(child: _btn('/', () => _pressOperator('/'))),
+      Expanded(child: _btn('=', _evaluate, color: AppTheme.accentOrange)),
+    ]);
   }
 
   Widget _btn(String label, VoidCallback? onTap, {Color? color, bool disabled = false, double opacity = 1.0}) {
