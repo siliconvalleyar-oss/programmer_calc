@@ -154,6 +154,76 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _showSettings() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Display types',
+                style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              ...['DEC', 'HEX', 'BIN'].map((t) => CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(t, style: const TextStyle(color: AppTheme.textPrimary, fontFamily: 'monospace')),
+                value: _engine.visibleTypes.contains(t),
+                activeColor: AppTheme.accentTeal,
+                onChanged: (v) {
+                  setState(() {
+                    if (v == true) {
+                      _engine.visibleTypes.add(t);
+                    } else {
+                      _engine.visibleTypes.remove(t);
+                    }
+                  });
+                  setSheetState(() {});
+                },
+              )),
+              CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('OCT', style: TextStyle(color: AppTheme.textPrimary, fontFamily: 'monospace')),
+                value: _engine.showOctal,
+                activeColor: AppTheme.accentTeal,
+                onChanged: (v) {
+                  setState(() => _engine.showOctal = v ?? false);
+                  setSheetState(() {});
+                },
+              ),
+              CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('FLOAT', style: TextStyle(color: AppTheme.textPrimary, fontFamily: 'monospace')),
+                value: _engine.showFloat,
+                activeColor: AppTheme.accentTeal,
+                onChanged: (v) {
+                  setState(() {
+                    _engine.showFloat = v ?? false;
+                    if (v == true) {
+                      _engine.visibleTypes.add('FLOAT');
+                    } else {
+                      _engine.visibleTypes.remove('FLOAT');
+                    }
+                  });
+                  setSheetState(() {});
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _setBase(InputBase base) {
     if (base == _inputBase) return;
     setState(() => _inputBase = base);
@@ -215,6 +285,11 @@ class _HomeScreenState extends State<HomeScreen> {
             )),
           ),
           IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Display settings',
+            onPressed: _showSettings,
+          ),
+          IconButton(
             icon: const Icon(Icons.calculate_outlined),
             tooltip: 'Basic mode',
             onPressed: widget.onToggleMode,
@@ -228,6 +303,8 @@ class _HomeScreenState extends State<HomeScreen> {
             result: _result,
             error: _error,
             showOctal: _engine.showOctal,
+            showFloat: _engine.showFloat,
+            visibleTypes: _engine.visibleTypes,
             engine: _engine,
           ),
           _buildBaseSelector(baseColor),

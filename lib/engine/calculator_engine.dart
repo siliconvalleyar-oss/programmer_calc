@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'token.dart';
 
 class CalculatorEngine {
@@ -357,11 +358,23 @@ class CalculatorEngine {
     }
   }
 
-  String formatDec(num value) => value.toString();
+  String formatDec(num value) {
+    if (value == value.toInt()) {
+      return value.toInt().toString();
+    }
+    return value.toString();
+  }
 
   String formatHex(num value) {
     final intVal = value.toInt() & mask64;
-    return intVal.toRadixString(16).toUpperCase();
+    var s = intVal.toRadixString(16).toUpperCase();
+    if (s.length <= 2) return s;
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && i % 2 == 0) buf.write(' ');
+      buf.write(s[i]);
+    }
+    return buf.toString();
   }
 
   String formatOct(num value) {
@@ -370,35 +383,50 @@ class CalculatorEngine {
   }
 
   String formatBin(num value) {
-    final intVal = value.toInt() & mask64;
-    var s = intVal.toRadixString(2).padLeft(64, '0');
+    final raw = (value.toInt() & mask64).toRadixString(2);
+    final bytes = (raw.length + 7) ~/ 8;
+    final padded = raw.padLeft(bytes * 8, '0');
     final buf = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
+    for (var i = 0; i < padded.length; i++) {
       if (i > 0 && i % 8 == 0) buf.write(' ');
-      buf.write(s[i]);
+      buf.write(padded[i]);
     }
     return buf.toString();
   }
 
   String formatBinLabels(num value) {
-    const groups = 8;
-    const bitsPerGroup = 8;
+    final raw = (value.toInt() & mask64).toRadixString(2);
+    final bytes = (raw.length + 7) ~/ 8;
+    if (bytes == 0) return '';
     final buf = StringBuffer();
     int currentPos = 0;
-    for (int g = 0; g < groups; g++) {
-      final lsb = (groups - 1 - g) * bitsPerGroup;
+    for (int g = 0; g < bytes; g++) {
+      final lsb = (bytes - 1 - g) * 8;
       final label = lsb.toString();
-      final labelEnd = currentPos + bitsPerGroup - 1;
+      final labelEnd = currentPos + 8 - 1;
       final labelStart = labelEnd - label.length + 1;
       final spaces = labelStart - buf.length;
       if (spaces > 0) buf.write(''.padLeft(spaces));
       buf.write(label);
-      currentPos += bitsPerGroup + 1;
+      currentPos += 9;
     }
     return buf.toString();
+  }
+
+  String formatFloat(num value) {
+    final d = value.toDouble();
+    if (d.isNaN) return 'NaN';
+    if (d.isInfinite) return d > 0 ? 'Inf' : '-Inf';
+    if (d == 0.0) return '0.0';
+    final bd = ByteData(8);
+    bd.setFloat64(0, d);
+    final bits = bd.getUint64(0);
+    return bits.toRadixString(16).padLeft(16, '0').toUpperCase();
   }
 
   static const int mask64 = 0x7FFFFFFFFFFFFFFF;
 
   bool showOctal = false;
+  bool showFloat = false;
+  Set<String> visibleTypes = {'DEC', 'HEX', 'BIN'};
 }

@@ -7,6 +7,8 @@ class CalcDisplay extends StatelessWidget {
   final num? result;
   final String? error;
   final bool showOctal;
+  final bool showFloat;
+  final Set<String> visibleTypes;
   final CalculatorEngine engine;
 
   const CalcDisplay({
@@ -15,6 +17,8 @@ class CalcDisplay extends StatelessWidget {
     this.result,
     this.error,
     this.showOctal = false,
+    this.showFloat = false,
+    this.visibleTypes = const {'DEC', 'HEX', 'BIN'},
     required this.engine,
   });
 
@@ -59,15 +63,23 @@ class CalcDisplay extends StatelessWidget {
 
   Widget _buildResultDisplays() {
     final v = result!;
-    final binValue = engine.formatBin(v);
-    final binLabels = engine.formatBinLabels(v);
-    final rows = <Widget>[
-      _resultRow('DEC', AppTheme.decColor, engine.formatDec(v)),
-      _resultRow('HEX', AppTheme.hexColor, '0x${engine.formatHex(v)}'),
-      _binRow(binValue, binLabels),
-    ];
+    final rows = <Widget>[];
+    if (visibleTypes.contains('DEC')) {
+      rows.add(_resultRow('DEC', AppTheme.decColor, engine.formatDec(v)));
+    }
+    if (visibleTypes.contains('HEX')) {
+      rows.add(_resultRow('HEX', AppTheme.hexColor, '0x${engine.formatHex(v)}'));
+    }
+    if (visibleTypes.contains('BIN')) {
+      final binValue = engine.formatBin(v);
+      final binLabels = engine.formatBinLabels(v);
+      rows.add(_binRow(binValue, binLabels));
+    }
     if (showOctal) {
       rows.add(_resultRow('OCT', AppTheme.octColor, '0o${engine.formatOct(v)}'));
+    }
+    if (showFloat && visibleTypes.contains('FLOAT')) {
+      rows.add(_resultRow('FLOAT', AppTheme.accentTeal, engine.formatFloat(v)));
     }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -107,11 +119,12 @@ class CalcDisplay extends StatelessWidget {
                 style: const TextStyle(color: Colors.white, fontSize: 15),
                 textAlign: TextAlign.right,
               ),
-              Text(
-                ' $binLabels',
-                style: const TextStyle(color: AppTheme.textDim, fontSize: 11),
-                textAlign: TextAlign.right,
-              ),
+              if (binLabels.isNotEmpty)
+                Text(
+                  binLabels,
+                  style: const TextStyle(color: AppTheme.textDim, fontSize: 11),
+                  textAlign: TextAlign.right,
+                ),
             ],
           ),
         ),
@@ -123,7 +136,7 @@ class CalcDisplay extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 40,
+          width: 46,
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.15),
