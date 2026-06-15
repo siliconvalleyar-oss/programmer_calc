@@ -72,8 +72,7 @@ class CalcDisplay extends StatelessWidget {
     }
     if (visibleTypes.contains('BIN')) {
       final binValue = engine.formatBin(v);
-      final binLabels = engine.formatBinLabels(v);
-      rows.add(_binRow(binValue, binLabels));
+      rows.add(_binRow(binValue));
     }
     if (showOctal) {
       rows.add(_resultRow('OCT', AppTheme.octColor, '0o${engine.formatOct(v)}'));
@@ -96,7 +95,7 @@ class CalcDisplay extends StatelessWidget {
     );
   }
 
-  Widget _binRow(String binValue, String binLabels) {
+  Widget _binRow(String binValue) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -111,21 +110,10 @@ class CalcDisplay extends StatelessWidget {
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '0b$binValue',
-                style: const TextStyle(color: Colors.white, fontSize: 15),
-                textAlign: TextAlign.right,
-              ),
-              if (binLabels.isNotEmpty)
-                Text(
-                  binLabels,
-                  style: const TextStyle(color: AppTheme.textDim, fontSize: 11),
-                  textAlign: TextAlign.right,
-                ),
-            ],
+          child: Text(
+            '0b$binValue',
+            style: const TextStyle(color: Colors.white, fontSize: 15),
+            textAlign: TextAlign.right,
           ),
         ),
       ],

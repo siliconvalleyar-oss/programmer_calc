@@ -358,6 +358,13 @@ class CalculatorEngine {
     }
   }
 
+  static int _ieee754Bits(num value) {
+    final d = value.toDouble();
+    final bd = ByteData(8);
+    bd.setFloat64(0, d);
+    return bd.getUint64(0);
+  }
+
   String formatDec(num value) {
     if (value == value.toInt()) {
       return value.toInt().toString();
@@ -366,23 +373,47 @@ class CalculatorEngine {
   }
 
   String formatHex(num value) {
+    if (value is double && value != value.floorToDouble()) {
+      final bits = _ieee754Bits(value);
+      var s = bits.toRadixString(16).toUpperCase();
+      if (s.length <= 4) return s;
+      final buf = StringBuffer();
+      for (var i = 0; i < s.length; i++) {
+        if (i > 0 && i % 4 == 0) buf.write('\u2006');
+        buf.write(s[i]);
+      }
+      return buf.toString();
+    }
     final intVal = value.toInt() & mask64;
     var s = intVal.toRadixString(16).toUpperCase();
-    if (s.length <= 2) return s;
+    if (s.length <= 4) return s;
     final buf = StringBuffer();
     for (var i = 0; i < s.length; i++) {
-      if (i > 0 && i % 2 == 0) buf.write(' ');
+      if (i > 0 && i % 4 == 0) buf.write('\u2006');
       buf.write(s[i]);
     }
     return buf.toString();
   }
 
   String formatOct(num value) {
+    if (value is double && value != value.floorToDouble()) {
+      return 'N/A';
+    }
     final intVal = value.toInt() & mask64;
     return intVal.toRadixString(8);
   }
 
   String formatBin(num value) {
+    if (value is double && value != value.floorToDouble()) {
+      final bits = _ieee754Bits(value);
+      final raw = bits.toRadixString(2).padLeft(64, '0');
+      final buf = StringBuffer();
+      for (var i = 0; i < raw.length; i++) {
+        if (i > 0 && i % 8 == 0) buf.write(' ');
+        buf.write(raw[i]);
+      }
+      return buf.toString();
+    }
     final raw = (value.toInt() & mask64).toRadixString(2);
     final bytes = (raw.length + 7) ~/ 8;
     final padded = raw.padLeft(bytes * 8, '0');
